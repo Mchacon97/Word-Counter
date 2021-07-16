@@ -1,0 +1,141 @@
+﻿@inject IJSRuntime JsRuntime;
+@page "/WordCounter"
+@using System.IO;
+@using Entities;
+
+<form>
+    <div class="form-group">
+        <label>Seleccione un archivo:</label>
+        <br>
+        <InputFile OnChange="LoadFiles"></InputFile>
+    </div>
+
+    <div>
+        <EditForm Model="File">
+            <div class="form-group">
+                <label>Nombre del Archivo:</label>
+                <InputText @bind-Value="File.FileName" disabled="true" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Contenido:</label>
+                <InputTextArea @bind-Value="File.Content" rows="15" disabled="true" class="form-control" />
+            </div>
+            <div class="form-group">
+                <table class="table table-hover table-striped table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Palabra</th>
+                            <th>Conteo</th>
+                            <th>Longitud</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        @foreach (var item in File.Words)
+                        {
+                            <tr>
+                                <td>@item.Value</td>
+                                <td>@item.Count</td>
+                                <td>@item.Length</td>
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+            </div>
+        </EditForm>
+    </div>
+</form>
+
+@code {
+
+    public cFile File = new cFile();
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            if (e.File.ContentType != "text/plain")
+            {
+                await JsRuntime.InvokeVoidAsync("alert", "File not permitted, please select a .txt file");
+                File = new cFile();
+            }
+            else
+            {
+                File = new cFile()
+                {
+                    FileName = e.File.Name,
+                    Content = await ReadFormFileAsync(e.File.OpenReadStream()),
+                };
+                CountWords();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", $"Error in : {ex.GetBaseException().Message}");
+        }
+    }
+
+    public static async Task<string> ReadFormFileAsync(Stream file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return await Task.FromResult((string)null);
+            }
+
+            using (var reader = new StreamReader(file))
+            {
+                return await reader.ReadToEndAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"[ReadFormFileAsync] {ex.GetBaseException().Message}");
+        }
+    }
+
+    private void CountWords()
+    {
+        try
+        {
+            //Remove . and , from the original text to be process
+            string sTextToProcess = File.Content.Replace(",", "");
+            sTextToProcess = sTextToProcess.Replace(".", "");
+            sTextToProcess = sTextToProcess.Replace("\n", " ");
+
+            //Split the text to have an words array
+            string[] saWords = sTextToProcess.Split(" ");
+
+            // Create WordCounter list to be shown on table
+            File.Words = new List<cWord>();
+
+            foreach (string word in saWords)
+            {
+                //Search word into list to increment count or add it to the list
+                cWord ActualWord = File.Words.Find(item => item.Value.ToLower() == word.ToLower());
+
+                if (ActualWord != null)
+                {
+                    ActualWord.Count += 1;
+                }
+                else
+                {
+                    File.Words.Add(new cWord()
+                    {
+                        Value = word,
+                        Count = 1,
+                        Length = word.Length
+                    }
+                                  );
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"[CountWords] {ex.GetBaseException().Message}");
+        }
+    }
+
+}
