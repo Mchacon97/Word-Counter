@@ -18,7 +18,7 @@
             </div>
             <div class="form-group">
                 <label>Contenido:</label>
-                <InputTextArea @bind-Value="File.Content" rows="15" disabled="true" class="form-control" />
+                <InputTextArea @bind-Value="File.Content" @onblur="OnBlurHandler" rows="15" disabled=@IsDisabled class="form-control" />
             </div>
             <div class="form-group">
                 <table id="Words" class="table table-hover table-striped table-bordered">
@@ -30,7 +30,6 @@
                         </tr>
                     </thead>
                     <tbody>
-
                         @foreach (var item in File.Words)
                         {
                             <tr>
@@ -39,7 +38,6 @@
                                 <td>@item.Length</td>
                             </tr>
                         }
-
                     </tbody>
                 </table>
             </div>
@@ -50,6 +48,7 @@
 @code {
 
     public cFile File = new cFile();
+    public bool IsDisabled = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -62,19 +61,20 @@
         {
             if (e.File.ContentType != "text/plain")
             {
-                await JsRuntime.InvokeVoidAsync("alert", "File not permitted, please select a .txt file");
+                IsDisabled = false;
                 File = new cFile();
+                await JsRuntime.InvokeVoidAsync("alert", "File not permitted, please select a .txt file or type on text area");
                 await JsRuntime.InvokeVoidAsync("LoadDataTable", "#Words");
             }
             else
             {
+                IsDisabled = true;
                 File = new cFile()
                 {
                     FileName = e.File.Name,
                     Content = await ReadFormFileAsync(e.File.OpenReadStream()),
                 };
                 CountWords();
-
                 await JsRuntime.InvokeVoidAsync("LoadDataTable", "#Words");
             }
         }
@@ -143,6 +143,21 @@
         catch (Exception ex)
         {
             throw new Exception($"[CountWords] {ex.GetBaseException().Message}");
+        }
+    }
+
+    private async Task OnBlurHandler()
+    {
+        if(File.Content.Length > 0)
+        {
+            string sContent = File.Content;
+            File = new cFile()
+            {
+                FileName = "",
+                Content = sContent
+            };
+            CountWords();
+            await JsRuntime.InvokeVoidAsync("LoadDataTable", "#Words");
         }
     }
 
