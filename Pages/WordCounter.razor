@@ -21,7 +21,7 @@
                 <InputTextArea @bind-Value="File.Content" rows="15" disabled="true" class="form-control" />
             </div>
             <div class="form-group">
-                <table class="table table-hover table-striped table-bordered">
+                <table id="Words" class="table table-hover table-striped table-bordered">
                     <thead class="thead-dark">
                         <tr>
                             <th>Palabra</th>
@@ -51,6 +51,11 @@
 
     public cFile File = new cFile();
 
+    protected override async Task OnInitializedAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("LoadDataTable", "#Words");
+    }
+
     private async Task LoadFiles(InputFileChangeEventArgs e)
     {
         try
@@ -59,6 +64,7 @@
             {
                 await JsRuntime.InvokeVoidAsync("alert", "File not permitted, please select a .txt file");
                 File = new cFile();
+                await JsRuntime.InvokeVoidAsync("LoadDataTable", "#Words");
             }
             else
             {
@@ -68,6 +74,8 @@
                     Content = await ReadFormFileAsync(e.File.OpenReadStream()),
                 };
                 CountWords();
+
+                await JsRuntime.InvokeVoidAsync("LoadDataTable", "#Words");
             }
         }
         catch (Exception ex)

@@ -9,6 +9,12 @@
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="Tcs_Test.styles.css" rel="stylesheet" />
+    <!-- Datatables -->
+    <script type="text/javascript" src="js/jquery/jquery-3.5.1.js"></script>
+    <script type="text/javascript" src="js/datatables/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="js/datatables/dataTables.bootstrap5.min.js"></script>
+    <link href="css/datatables/dataTables.bootstrap5.min.css" rel="stylesheet" />
+
 </head>
 
 <body>
@@ -20,6 +26,13 @@
         <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
+    <!-- Datatables -->
+    <script>
+        function LoadDataTable(table) {
+            $(document).ready(function () {
+                $(table).DataTable();
+            });
+        }
+    </script>
 </body>
-
 </html>
